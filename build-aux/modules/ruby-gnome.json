@@ -1,0 +1,130 @@
+{
+  "name": "ruby-gnome",
+  "buildsystem": "simple",
+  "build-options": {
+    "env": {
+      "MAKEFLAGS": "-j4"
+    }
+  },
+  "build-commands": [
+    "gem install --local --no-document --verbose native-package-installer-1.1.9.gem \\\n    pkg-config-1.6.5.gem \\\n    glib2-4.3.8.gem \\\n    rake-13.4.2.gem \\\n    atk-4.3.8.gem \\\n    json-2.21.2.gem \\\n    matrix-0.4.3.gem \\\n    red-colors-0.4.0.gem \\\n    cairo-1.18.5.gem \\\n    cairo-gobject-4.3.8.gem \\\n    fiddle-1.1.8.gem \\\n    gobject-introspection-4.3.8.gem \\\n    gio2-4.3.8.gem \\\n    gdk_pixbuf2-4.3.8.gem \\\n    pango-4.3.8.gem \\\n    gdk4-4.3.8.gem \\\n    graphene1-4.3.8.gem \\\n    gsk4-4.3.8.gem \\\n    gtk4-4.3.8.gem \\\n    adwaita-4.3.8.gem",
+    "install -Dm755 ruby-smoke-test.rb ${FLATPAK_DEST}/bin/workbench-ruby-smoke-test"
+  ],
+  "post-install": [
+    "ruby -e 'require \"gobject-introspection\"; require \"gio2\"; puts \"ruby-gnome: introspection ok\"'",
+    "gem list --local gtk4 adwaita gobject-introspection"
+  ],
+  "cleanup": [
+    "/lib/ruby/gems/*/cache",
+    "/lib/ruby/gems/*/doc",
+    "/lib/ruby/gems/*/gems/*/test",
+    "/lib/ruby/gems/*/gems/*/sample",
+    "*.o"
+  ],
+  "sources": [
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/native-package-installer-1.1.9.gem",
+      "sha256": "fbb41b6b22750791a4304f0a0aeea3dd837668892117f49c4caf2e8e0f4e792f"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/pkg-config-1.6.5.gem",
+      "sha256": "33f9f81c5322983d22b439b8b672f27777b406fea23bfec74ff14bbeb42ec733"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/glib2-4.3.8.gem",
+      "sha256": "7b8c4dac3884c65f220552eef9f22e2ca4fa20fba06ec80161842b6c119671b4"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/rake-13.4.2.gem",
+      "sha256": "cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/atk-4.3.8.gem",
+      "sha256": "58b0b35b0e2722a176c41525443b4a0cad84a938b242cd47e26408154de9e414"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/json-2.21.2.gem",
+      "sha256": "1f1d3b7cf2b3ba1a69beca0bb6db13d5438b80bff3cd54cdaaa620b9b07c1c6a"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/matrix-0.4.3.gem",
+      "sha256": "a0d5ab7ddcc1973ff690ab361b67f359acbb16958d1dc072b8b956a286564c5b"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/red-colors-0.4.0.gem",
+      "sha256": "2356eba0782ca6c44caa47645fbf942a2b16d85905c35c6e3f80d5ff0c04929a"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/cairo-1.18.5.gem",
+      "sha256": "e57356141c91748061b10260e185735bd6e2288ab81ab300a6de3adfa270a623"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/cairo-gobject-4.3.8.gem",
+      "sha256": "ce713ad7800d811d514a3a26a979d4f17aa53712135a1023c946c03aee5d93ec"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/fiddle-1.1.8.gem",
+      "sha256": "7fa8ee3627271497f3add5503acdbc3f40b32f610fc1cf49634f083ef3f32eee"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/gobject-introspection-4.3.8.gem",
+      "sha256": "c5b068b9330f97d5e4cdeb747ad7645d3ec2bbbf9fa16e61a0f8b4f9f34a0521"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/gio2-4.3.8.gem",
+      "sha256": "06f4ea5e31ed7910f619dea2ef56a2b349e6da470f77005c63e9d48170c7df44"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/gdk_pixbuf2-4.3.8.gem",
+      "sha256": "7e8aed522aefa3bf7c04adb6588ed97570455d9c2cdb8694cd9c58f6e71b5c8e"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/pango-4.3.8.gem",
+      "sha256": "c078a0670acab131933ea96c213f3070152a8b93ac4beccae77e3aabf91b64be"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/gdk4-4.3.8.gem",
+      "sha256": "6b5a9e32ddf7112ff549266deb0c89f4a4c383903259fe3a93942a236d63fe99"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/graphene1-4.3.8.gem",
+      "sha256": "3842d74a9478f6c070d7dd0bf03a6241615ce05430a58681230b0f52ab22bc13"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/gsk4-4.3.8.gem",
+      "sha256": "98a1b417d7c4518654b2d793d3f275c14c70bfa2f65da4944c0f8802d5210f10"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/gtk4-4.3.8.gem",
+      "sha256": "ecbe65dad31f9c29a36abaccbca14eec877545aeb63f1e8c1cc90e48d9824bab"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/adwaita-4.3.8.gem",
+      "sha256": "73725e7fafdd5608638339dca5bbac214c3ef94fee7c3db45055adc4e7117361"
+    },
+    {
+      "type": "file",
+      "path": "sources/ruby-smoke-test.rb"
+    }
+  ]
+}

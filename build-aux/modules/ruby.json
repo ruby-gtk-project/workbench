@@ -1,0 +1,47 @@
+{
+  "name": "ruby",
+  "buildsystem": "autotools",
+  "config-opts": [
+    "--disable-install-doc",
+    "--disable-install-rdoc",
+    "--disable-install-capi",
+    "--enable-shared",
+    "--enable-load-relative",
+    "--disable-jemalloc",
+    "--disable-yjit",
+    "--disable-zjit",
+    "--without-gmp"
+  ],
+  "cleanup": [
+    "/include",
+    "/lib/pkgconfig",
+    "/share/man",
+    "*.a"
+  ],
+  "post-install": [
+    "ruby --version",
+    "ruby -e 'require \"json\"; require \"psych\"; require \"openssl\"; puts \"stdlib ok\"'"
+  ],
+  "sources": [
+    {
+      "type": "archive",
+      "url": "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.6.tar.xz",
+      "sha256": "9c9d121fe3314ea7c801e690b9de981d2b9d12d7849db99c27482468a541ba0a"
+    }
+  ],
+  "modules": [
+    {
+      "name": "libyaml",
+      "buildsystem": "autotools",
+      "config-opts": ["--disable-static"],
+      "cleanup": ["/include", "/lib/pkgconfig", "/lib/cmake", "*.a"],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://github.com/yaml/libyaml/releases/download/0.2.5/yaml-0.2.5.tar.gz",
+          "sha256": "c642ae9b75fee120b2d96c712538bd2cf283228d2337df2cf2988e3c02678ef4"
+        }
+      ]
+    }
+  ]
+}

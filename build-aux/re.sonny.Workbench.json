@@ -47,6 +47,8 @@
     "modules/python-python-lsp-server.json",
     "modules/python-ruff.json",
     "modules/python-python-lsp-ruff.json",
+    "modules/ruby.json",
+    "modules/ruby-gnome.json",
     {
       "name": "Workbench",
       "buildsystem": "meson",
