@@ -1,0 +1,2 @@
+#!/bin/sh
+exec ruby "@pkgdatadir@/ruby-previewer.rb" "@pkgdatadir@/previewer.xml" "$@"

@@ -48,6 +48,7 @@ install_data('project-readme.md', install_dir: pkgdatadir)
 subdir('libworkbench')
 subdir('Previewer')
 subdir('langs/python')
+subdir('langs/ruby')
 subdir('langs/css')
 
 gjspack = find_program('../troll/gjspack/bin/gjspack')

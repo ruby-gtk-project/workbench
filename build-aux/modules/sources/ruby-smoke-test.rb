@@ -24,18 +24,19 @@ rescue StandardError => error
   warn "Workbench typelib unavailable: #{error.message}"
 end
 
-Adw.init
-
-application = Adw::Application.new("re.sonny.Workbench.RubySmokeTest", :default_flags)
+# Adwaita::Application is broken in the Ruby bindings; the application object
+# has to be a Gtk one. Adwaita::ApplicationWindow works and is what keeps
+# Adwaita dialogs inside the window.
+application = Gtk::Application.new("re.sonny.Workbench.RubySmokeTest", :default_flags)
 
 application.signal_connect("activate") do |app|
-  window = Adw::ApplicationWindow.new(app)
+  window = Adwaita::ApplicationWindow.new(app)
   window.set_default_size(360, 200)
 
-  toolbar = Adw::ToolbarView.new
-  toolbar.add_top_bar(Adw::HeaderBar.new)
+  toolbar = Adwaita::ToolbarView.new
+  toolbar.add_top_bar(Adwaita::HeaderBar.new)
 
-  status = Adw::StatusPage.new
+  status = Adwaita::StatusPage.new
   status.title = "Ruby works"
   gtk_version = defined?(Gtk::Version::STRING) ? Gtk::Version::STRING : "?"
   status.description = "GTK #{gtk_version} • Ruby #{RUBY_VERSION}"
