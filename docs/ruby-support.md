@@ -142,10 +142,10 @@ after the Python LSP modules and before the `Workbench` module itself:
   therefore RubyGems' config handling) needs it. A `post-install` step asserts
   `json`, `psych` and `openssl` all loaded, so a silently-skipped extension
   fails the build rather than surfacing later.
-- **`build-aux/modules/ruby-gnome.json`** — the full 21-gem ruby-gnome closure
+- **`build-aux/modules/ruby-gnome.json`** — the full 22-gem ruby-gnome closure
   at 4.3.8, rooted at `adwaita` + `gtk4` + `gobject-introspection` +
-  `gtksourceview5`. Flatpak
-  builds are offline, so every gem is a pinned `file` source
+  `gtksourceview5` + `webkit-gtk`. Flatpak builds are offline, so every gem is
+  a pinned `file` source
   (`https://rubygems.org/downloads/<name>-<version>.gem` + sha256) and they are
   installed with a single `gem install --local` **in topological order** —
   RubyGems reaches for the network the moment a dependency is missing, so the
@@ -174,7 +174,7 @@ flatpak run --command=workbench-ruby-smoke-test re.sonny.Workbench.Devel
 Verified: every pinned checksum matches the real download, and
 `gem install --local --explain` against a clean `GEM_HOME` with the network
 blocked resolves the whole set in the declared order, so the closure is
-complete and offline-installable. Separately, **all 21 gems build and load on
+complete and offline-installable. Separately, **all 22 gems build and load on
 Ruby 4.0.6** — every native extension compiles and `require "gtk4"; require
 "adwaita"` succeeds. That was the open question about ruby-gnome 4.3.8 on Ruby
 4.0, and the answer is yes.
@@ -184,10 +184,11 @@ thing still unproven is the same compiles against the **GNOME 50 SDK's**
 headers rather than nixpkgs'. Same gems, same compiler flags, different
 prefix — low risk, but it needs one `flatpak-builder` run.
 
-ruby-gnome has **no gem for WebKit or libshumate**. The Python previewer
-`gi.require_version`s both, so the WebKit and Shumate demos have no Ruby
-counterpart until someone writes those bindings or loads the typelibs through
-`GObjectIntrospection::Loader` by hand.
+Of the libraries the Python previewer pulls in, ruby-gnome covers everything
+except **libshumate**: GTK4, Libadwaita, GtkSourceView 5 and WebKitGTK 6.0 all
+have gems (`webkit-gtk` for the last of those — the gem name does not match the
+library name). Only the Shumate demos have no Ruby counterpart. See
+[FINDINGS.md](../FINDINGS.md).
 
 A language server (`ruby-lsp`) is deliberately **not** in these modules yet; it
 is step 5, and it is a single self-contained gem with its own closure.
@@ -285,13 +286,14 @@ not in the constructor.
 
 #### ruby-gnome quirks the port ran into
 
-Five ruby-gnome defects surfaced during this port. They are written up with
+Six ruby-gnome defects surfaced during this port. They are written up with
 root causes, severities and runnable reproductions in **[FINDINGS.md](../FINDINGS.md)**;
 `nix/ruby-gnome-findings.rb` reports which ones still reproduce after a gem
 bump. In short: two are struct-field marshalling bugs (RG-1, RG-2), one is
 missing tuple support in `GLib::Variant.new` (RG-3), one is a constructor that
-silently returns `nil` (RG-4), and one is undocumented argument conversion
-(RG-5).
+silently returns `nil` (RG-4), one is undocumented argument conversion (RG-5),
+and one is lazy typelib loading that makes `Gtk::Builder` return `nil` for
+widgets whose constant has not been touched (RG-6).
 
 `Gtk::Builder.new(string:)`, `expose_object`, `Gtk::IconTheme.get_for_display`,
 `Gtk::StyleContext.add_provider_for_display`, `Gtk::Snapshot`,

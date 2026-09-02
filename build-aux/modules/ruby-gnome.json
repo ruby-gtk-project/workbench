@@ -7,7 +7,7 @@
     }
   },
   "build-commands": [
-    "gem install --local --no-document --verbose native-package-installer-1.1.9.gem \\\n    pkg-config-1.6.5.gem \\\n    glib2-4.3.8.gem \\\n    rake-13.4.2.gem \\\n    atk-4.3.8.gem \\\n    json-2.21.2.gem \\\n    matrix-0.4.3.gem \\\n    red-colors-0.4.0.gem \\\n    cairo-1.18.5.gem \\\n    cairo-gobject-4.3.8.gem \\\n    fiddle-1.1.8.gem \\\n    gobject-introspection-4.3.8.gem \\\n    gio2-4.3.8.gem \\\n    gdk_pixbuf2-4.3.8.gem \\\n    pango-4.3.8.gem \\\n    gdk4-4.3.8.gem \\\n    graphene1-4.3.8.gem \\\n    gsk4-4.3.8.gem \\\n    gtk4-4.3.8.gem \\\n    adwaita-4.3.8.gem \\\n    gtksourceview5-4.3.8.gem",
+    "gem install --local --no-document --verbose native-package-installer-1.1.9.gem \\\n    pkg-config-1.6.5.gem \\\n    glib2-4.3.8.gem \\\n    rake-13.4.2.gem \\\n    atk-4.3.8.gem \\\n    json-2.21.2.gem \\\n    matrix-0.4.3.gem \\\n    red-colors-0.4.0.gem \\\n    cairo-1.18.5.gem \\\n    cairo-gobject-4.3.8.gem \\\n    fiddle-1.1.8.gem \\\n    gobject-introspection-4.3.8.gem \\\n    gio2-4.3.8.gem \\\n    gdk_pixbuf2-4.3.8.gem \\\n    pango-4.3.8.gem \\\n    gdk4-4.3.8.gem \\\n    graphene1-4.3.8.gem \\\n    gsk4-4.3.8.gem \\\n    gtk4-4.3.8.gem \\\n    adwaita-4.3.8.gem \\\n    gtksourceview5-4.3.8.gem \\\n    webkit-gtk-4.3.8.gem",
     "install -Dm755 ruby-smoke-test.rb ${FLATPAK_DEST}/bin/workbench-ruby-smoke-test"
   ],
   "post-install": [
@@ -126,6 +126,11 @@
       "type": "file",
       "url": "https://rubygems.org/downloads/gtksourceview5-4.3.8.gem",
       "sha256": "0691e22ef5088ffa32dda6ed460c791e592eed0074af4d2111b7023d15ab10ea"
+    },
+    {
+      "type": "file",
+      "url": "https://rubygems.org/downloads/webkit-gtk-4.3.8.gem",
+      "sha256": "ff56232e32c571fafa24238ea53aabd5ed1215e759478be24d8e3f4857dcb713"
     },
     {
       "type": "file",

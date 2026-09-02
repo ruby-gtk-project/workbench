@@ -11,7 +11,7 @@ nix develop --command ./nix/ruby-gnome-findings.rb
 
 That script reports each item as **PRESENT** or **FIXED**, so after bumping the
 gems in `build-aux/modules/ruby-gnome.json` it says which workarounds can be
-deleted. As of ruby-gnome **4.3.8** on Ruby **4.0.6**, all five are PRESENT.
+deleted. As of ruby-gnome **4.3.8** on Ruby **4.0.6**, all six are PRESENT.
 
 None of these are worked around by patching the gems. Every workaround lives in
 `src/langs/ruby/gdbus_ext.rb` and `ruby-previewer.rb`, in ordinary Ruby, so
@@ -24,6 +24,7 @@ nothing has to be un-patched when upstream fixes them.
 | [RG-3](#rg-3) | missing feature | `GLib::Variant.new` cannot build tuples |
 | [RG-4](#rg-4) | API trap | `DBusConnection.new_for_address` is the async call and returns `nil` |
 | [RG-5](#rg-5) | undocumented behaviour | Closure arguments arrive converted, not as `GLib::Variant` |
+| [RG-6](#rg-6) | API trap | `require` does not register GTypes, so `Gtk::Builder` silently returns `nil` |
 
 ---
 
@@ -232,6 +233,48 @@ still has to be a real `GLib::Variant` (hence RG-3).
 
 ---
 
+## RG-6
+
+### `require` does not register GTypes, so `Gtk::Builder` silently returns `nil`
+
+Every ruby-gnome gem loads its typelib **lazily**, from `const_missing`:
+
+```ruby
+module WebKitGtk
+  class << self
+    def const_missing(name)
+      init            # this is what actually loads the WebKit typelib
+      ...
+```
+
+So after `require "webkit-gtk"` the `WebKitWebView` GType is still not
+registered, and building a UI definition that uses it does not raise — it
+hands back `nil`:
+
+```ruby
+require "webkit-gtk"
+Gtk::Builder.new(string: ui).get_object("web")   # => nil
+
+WebKitGtk::WebView                               # touching it loads the typelib
+Gtk::Builder.new(string: ui).get_object("web")   # => WebKitGtk::WebView
+```
+
+The same applies to `gtksourceview5` and `GtkSource::View`.
+
+**Impact.** Anything that builds widgets from XML rather than from Ruby — which
+is exactly what a Workbench previewer does — sees a missing widget instead of
+an error, and the failure surfaces far from its cause.
+
+**Workaround.** Touch the constants at startup, which is the direct counterpart
+of the `GObject.type_ensure()` calls at the top of `python-previewer.py`:
+
+```ruby
+GtkSource::View
+WebKitGtk::WebView
+```
+
+---
+
 ## Not bugs, but not guessable either
 
 Naming and namespace differences that cost time without being defects. The
@@ -243,6 +286,7 @@ worth reading before writing any Adwaita code.
 | `Adw::Window`, `Adw::StyleManager` | **`Adwaita::`**, not `Adw::` |
 | `Gtk.init` / `Adw.init` | Neither exists; both gems initialise on `require` |
 | `Adwaita::Application` | Broken; use `Gtk::Application` with `Adwaita::ApplicationWindow` |
+| `WebKit` (module), gem `webkit-gtk6` | Module **`WebKitGtk`**, gem **`webkit-gtk`** |
 | `Gtk::Window.set_interactive_debugging(bool)` | `Gtk::Window.interactive_debugging = bool` also works |
 | `PyGObject`'s missing Graphene constructors | `Graphene::Rect.new(x, y, w, h)` works — Ruby is *better* here |
 
@@ -255,10 +299,28 @@ runs.
 
 ## Gaps rather than bugs
 
-ruby-gnome has **no gem for WebKit or libshumate**. `python-previewer.py`
-`gi.require_version`s both, so the WebKit and Shumate demos have no Ruby
-counterpart until either those bindings exist or the typelibs are loaded by
-hand through `GObjectIntrospection::Loader`.
+Of the libraries `python-previewer.py` pulls in, ruby-gnome covers all but one.
+The [upstream binding list](https://github.com/ruby-gnome/ruby-gnome) is the
+thing to check — gem names do not always match the library name, and guessing
+them is how you conclude a binding is missing when it is not:
+
+| Library | ruby-gnome gem | Ruby module |
+|---|---|---|
+| GTK 4 | `gtk4` | `Gtk` |
+| Libadwaita | `adwaita` | **`Adwaita`** |
+| GtkSourceView 5 | `gtksourceview5` | `GtkSource` |
+| WebKitGTK 6.0 | **`webkit-gtk`** | **`WebKitGtk`** |
+| libshumate | *none* | — |
+
+`webkit-gtk` 4.3.8 depends on `gtk4 = 4.3.8` and binds the **WebKit 6.0**
+typelib, which is the GTK4 one — the same version `python-previewer.py` asks
+for. It is in the gem closure and the previewer loads it.
+
+**libshumate** genuinely has no binding: there is no `shumate` directory
+upstream and nothing on rubygems. Until one exists, the Shumate demos have no
+Ruby counterpart, unless the typelib is loaded by hand through
+`GObjectIntrospection::Loader` the way the previewer already loads the
+`Workbench` typelib.
 
 ## Upstream
 

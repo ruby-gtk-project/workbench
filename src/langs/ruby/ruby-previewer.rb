@@ -17,10 +17,19 @@
 # python-previewer.py.
 require "gtk4"
 require "adwaita"
-# Demos reach for GtkSource; the previewer loads it so they do not have to.
-# ruby-gnome has no gem for WebKit or libshumate, so the Shumate/WebKit demos
-# the Python previewer can run have no Ruby equivalent yet.
 require "gtksourceview5"
+require "webkit-gtk"
+
+# Requiring is not enough. Each ruby-gnome gem loads its typelib lazily from
+# const_missing, so until a constant is touched the GTypes are not registered
+# and Gtk::Builder answers nil for <object class="WebKitWebView"> rather than
+# raising. This is the counterpart of the GObject.type_ensure() calls at the
+# top of python-previewer.py.
+#
+# ruby-gnome has no libshumate binding, so the Shumate demos have no Ruby
+# equivalent yet.
+GtkSource::View
+WebKitGtk::WebView
 
 require_relative "gdbus_ext"
 

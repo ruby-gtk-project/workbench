@@ -132,6 +132,29 @@ finding("RG-5", "method-call closure receives converted values, not a GLib::Vari
   seen != GLib::Variant
 end
 
+finding("RG-6", "require does not register GTypes; Gtk::Builder returns nil") do
+  # Run in a child, because touching the constants to prove the workaround
+  # would poison the check for every later run in this process.
+  script = File.join(Dir.tmpdir, "rg6_#{Process.pid}.rb")
+  File.write(script, <<~CHILD)
+    require "gtk4"
+    require "webkit-gtk"
+    ui = '<?xml version="1.0"?><interface>' \
+         '<object class="WebKitWebView" id="web"/></interface>'
+    before = Gtk::Builder.new(string: ui).get_object("web")
+    WebKitGtk::WebView
+    after = Gtk::Builder.new(string: ui).get_object("web")
+    print(before.nil? && !after.nil? ? "lazy" : "eager")
+  CHILD
+  read, write = IO.pipe
+  pid = spawn(RbConfig.ruby, script, out: write, err: File::NULL)
+  write.close
+  Process.wait(pid)
+  result = read.read.strip
+  File.unlink(script)
+  result == "lazy"
+end
+
 puts
 puts "#{$present} present, #{$fixed} fixed"
 puts "see FINDINGS.md" if $present.positive?
