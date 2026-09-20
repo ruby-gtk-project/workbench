@@ -274,7 +274,7 @@ A fork carries up to four documents, and they are not interchangeable:
 |---|---|
 | `PORTING.md` | **what was ported** — the enumerated units, their state, the cursor |
 | `TEST_PARITY.md` | **what was tested** — this skill's census and bijection |
-| `COMPONENT_PARITY.md` | **what was built** — the three-axis component comparison |
+| `COMPONENT_PARITY.md` | **what was built** — the four-axis component comparison |
 | `FINDINGS.md` | **binding defects** — ruby-gnome bugs and workarounds found en route |
 
 `PORTING.md` describes *where things went*, and that makes it useful for

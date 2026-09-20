@@ -1,6 +1,6 @@
 ---
 name: component-parity
-description: Prove that a Ruby GTK4 port's UI matches the app it was ported from - the same widgets in the same numbers, carrying the same CSS classes, responding to the same signals and actions. Use when asked whether a port's UI is complete / matches / "looks the same" / "has component parity", when reviewing a port PR that adds UI, when a ported view looks or behaves subtly wrong, or before calling a port unit or a whole port finished. Pairs with test-parity; both are required before a port is done.
+description: Prove that a Ruby GTK4 port's UI matches the app it was ported from - the same widgets in the same numbers, carrying the same CSS classes, responding to the same signals and actions, and saying the same translatable strings. Use when asked whether a port's UI is complete / matches / "looks the same" / "has component parity", when reviewing a port PR that adds UI, when a ported view looks or behaves subtly wrong, when a ported view's labels were retyped or reworded, or before calling a port unit or a whole port finished. Pairs with test-parity and translation-parity; all are required before a port is done.
 ---
 
 # Component parity
@@ -8,11 +8,11 @@ description: Prove that a Ruby GTK4 port's UI matches the app it was ported from
 ## What component parity means
 
 **A port has component parity when, for every component the original builds,
-the port builds one that is the same on all three axes: the same widget type in
-the same number, carrying the same CSS classes, and responding to the same
-signals and actions.**
+the port builds one that is the same on all four axes: the same widget type in
+the same number, carrying the same CSS classes, responding to the same signals
+and actions, and showing the same translatable strings.**
 
-Three axes, and **all three must hold for the same component**:
+Four axes, and **all four must hold for the same component**:
 
 1. **Count.** The original's file builds three `Adw.ActionRow`s; the port's
    corresponding file builds three. Not two, not four. Widget-by-widget, not
@@ -28,8 +28,13 @@ Three axes, and **all three must hold for the same component**:
    connects to both `activated` and a long-press gesture, and the port connects
    only to `activated`, is a component with a feature missing, and no screenshot
    will ever show it.
+4. **Text.** Every user-visible string this component shows goes through a
+   translation marker, and its msgid is byte-identical to the one upstream's
+   component used. A label the port retyped, reworded or left unmarked is a
+   label that has no translation in any language upstream ships, and an English
+   screenshot of it looks perfect.
 
-### Why all three, and why per component
+### Why all four, and why per component
 
 Each axis alone fails in a way that looks like success:
 
@@ -38,6 +43,7 @@ Each axis alone fails in a way that looks like success:
 | Count only | A grey, inert copy of the app with every widget in place |
 | Style only | A pixel-perfect app where nothing responds to clicks |
 | Behaviour only | A working app that looks nothing like the original |
+| The first three | A perfect app that speaks only English, in a project that ships 78 languages |
 
 And per-component rather than per-app, because parity is a claim about
 *correspondence*. Totals cannot distinguish "ported the preferences dialog" from
@@ -199,6 +205,44 @@ counts differently:
 > behaviour. On these two axes compare the **set**, and reconcile any count
 > difference by reading rather than by reporting it.
 
+#### The text axis
+
+`component-scan.sh` does not carry strings, so this axis uses the census from
+`translation-parity`, scoped to the two mapped files rather than to the tree:
+
+```sh
+diff <(translation-parity/scripts/msgid-census.sh "$UP_FILE"   | cut -f1,2) \
+     <(translation-parity/scripts/msgid-census.sh "$PORT_FILE" | cut -f1,2)
+```
+
+Each row of the difference is one of three things, and only the first is fine:
+
+- **Moved.** The string is in the port, in another file — a label that lived in
+  the `.blp` upstream and is built in Ruby here. Locate it and say where, the
+  same as a moved widget.
+- **Reworded or retyped.** Same idea, different bytes: `Delete Contact` against
+  `Delete contact`, or a label with the mnemonic underscore stripped. This is a
+  **gap**, not a nit. A msgid is a hash key, so one changed character discards
+  every language's translation of that label while the English still reads
+  correctly.
+- **Unmarked.** The port builds the label as a bare literal with no `_()`
+  around it. Also a gap, and the one the scan finds most often, because it is
+  invisible in every English screenshot.
+
+Interpolation deserves its own mention because it is the common way to fail
+this axis without noticing. `"Exported #{count} contacts"` is not a
+translatable string — `#{}` runs before any marker could see it, so the lookup
+key differs on every call and matches nothing in any catalogue. The port must
+call `format(n_("Exported %d contact", "Exported %d contacts", n), n)` with
+upstream's msgids.
+
+**What this axis does not do:** the catalogue-level work. Whether the port
+ships upstream's `po/`, under the right domain, with every language and every
+msgid accounted for is `translation-parity`'s ledger, not this one. This axis
+asks only whether *this component* says what its original said. A component can
+pass here while the app has no `po/` directory at all — which is why both
+ledgers exist, and why neither implies the other.
+
 Two more correspondences on the `signal` axis:
 
 - `notify::selected` in the port against a bare `notify` upstream is the port *narrowing* the connection — strictly better, not a gap. Verify the property is the one upstream's handler acted on.
@@ -276,21 +320,30 @@ unit, appended to as units land:
 
 ## Unit: item row  —  `core/Widgets/ItemRow.vala` -> `lib/planify/widgets/item_row.rb`
 
-| Widget | Up × | Port × | CSS | Signals | Verdict |
-|---|---:|---:|---|---|---|
-| `Adw.ActionRow` | 1 | 1 | ✓ `item-row`, `priority-{1..4}` | ✓ `activated` | parity |
-| `Gtk.CheckButton` | 1 | 1 | ✓ `circular-check` | ✓ `toggled` | parity |
-| `Gtk.Label` | 2 | 1 | — | — | **gap**: due-date label not built |
-| `Gtk.GestureLongPress` | 1 | 0 | — | ✗ `pressed` | **gap**: no context menu on long press |
+| Widget | Up × | Port × | CSS | Signals | Text | Verdict |
+|---|---:|---:|---|---|:-:|---|
+| `Adw.ActionRow` | 1 | 1 | ✓ `item-row`, `priority-{1..4}` | ✓ `activated` | ✓ | parity |
+| `Gtk.CheckButton` | 1 | 1 | ✓ `circular-check` | ✓ `toggled` | — | parity |
+| `Gtk.Label` | 2 | 1 | — | — | — | **gap**: due-date label not built |
+| `Gtk.MenuButton` | 1 | 1 | ✓ `flat` | ✓ `clicked` | ✗ | **gap**: `_("_Delete")` built as bare `'Delete'` |
+| `Gtk.GestureLongPress` | 1 | 0 | — | ✗ `pressed` | — | **gap**: no context menu on long press |
 
 Stylesheet: `priority-3` defined upstream as `color: @orange_3`, port has
 `color: @yellow_5`. **gap**.
+Messages: 4 upstream, 3 in the port; `_Delete` unmarked, `Due %s` reworded to
+`Due: %s`. **gap** — both rows are open in `TRANSLATION_PARITY.md`.
 Driven: check toggles completion ✓, long press does nothing ✗.
 Screenshot: `tmp/shots/item-row.png`.
 ```
 
-A unit has parity when every row says `parity`, the stylesheet line is clean,
-and the driven line has no ✗. One gap is not a pass with a note.
+The `Text` column is `✓` when this widget's strings are marked and
+byte-identical, `✗` when one is not, and `—` when the widget shows no text of
+its own. The `Messages:` line carries the counts, because a string the port
+dropped entirely belongs to no widget row and would otherwise vanish.
+
+A unit has parity when every row says `parity`, the stylesheet and messages
+lines are clean, and the driven line has no ✗. One gap is not a pass with a
+note.
 
 ## Worked example — planify-rb
 
@@ -322,5 +375,15 @@ them, per `component-identification` Step 4.
 - An extra widget in the port is explained in the ledger or removed.
 - A CSS class that exists on both sides but whose rule differs is a gap, and it
   is the easiest one to miss — the class name matches.
+- A label that exists on both sides but whose msgid differs is a gap for the
+  same reason, and it is missed even more easily, because the English renders
+  correctly and only the other languages break.
+- Never fix a text-axis gap by rewording upstream's msgid to match the port.
+  The port moves to upstream's bytes, never the reverse — upstream's bytes are
+  the ones 78 catalogues are keyed on.
+- A text-axis gap is recorded in **both** ledgers: here against the component,
+  and in `TRANSLATION_PARITY.md` against the message. They are closed by one
+  edit and tracked in two places, because a reader of either must be able to
+  see it.
 - Component parity and test parity are separate claims. Neither implies the
   other, and a port is finished only when both hold.
