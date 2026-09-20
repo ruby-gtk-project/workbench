@@ -1,0 +1,63 @@
+# Compiles the agentic workflow .md files in .github/workflows into their
+# .lock.yml counterparts whenever one lands (a scaffold sync, a hand edit) or
+# by hand. Plain Actions, not gh-aw — it runs the gh-aw compiler; there is no
+# agent in it. The compiler version is pinned so every fork compiles the same
+# lock format the hub does.
+name: Compile agentic workflows
+
+on:
+  push:
+    branches: [ruby]
+    paths:
+      - ".github/workflows/*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write  # the failure-issue step
+
+concurrency:
+  group: compile-agentic-workflows
+  cancel-in-progress: false
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gh-aw
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh extension install github/gh-aw --pin v0.86.2
+
+      - name: Compile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh aw compile
+
+      - name: Commit the lock files
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/*.lock.yml
+          if git diff --cached --quiet; then
+            echo "lock files already in sync"
+            exit 0
+          fi
+          git commit -m "Compile agentic workflows"
+          git push
+
+      - name: File an issue when the run failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GH_AW_PROJECT_GITHUB_TOKEN }}
+        run: |
+          title="[compile-agentic-workflows] Run failed"
+          url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ "$(gh issue list -R "$GITHUB_REPOSITORY" --state open --search "in:title \"$title\"" --json number --jq 'length')" = "0" ]; then
+            gh issue create -R "$GITHUB_REPOSITORY" --title "$title" \
+              --body "The compile run failed — see $url"
+          fi
