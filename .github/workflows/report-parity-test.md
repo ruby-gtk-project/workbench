@@ -1,8 +1,8 @@
 ---
 description: |
   Runs the test-parity census on this repository: counts every upstream test,
-  maps each to a named Ruby test, and opens a pull request writing
-  .reports/TEST_PARITY.md. Triggered by hand.
+  maps each to a named Ruby test, and commits
+  .reports/TEST_PARITY.md to the ruby branch. Triggered by hand.
 
 on:
   workflow_dispatch:
@@ -71,16 +71,33 @@ steps:
       wc -l "$OUT/upstream-tests.tsv" "$OUT/port-tests.tsv"
       cat "$OUT/context.env"
 
-safe-outputs:
-  create-pull-request:
-    title-prefix: "[test-parity] "
-    labels: [test-parity]
-    max: 1
-    draft: false
-    # The census document and nothing else. An exclusive allowlist means a PR
-    # carrying anything but it is refused rather than reviewed.
-    allowed-files: [".reports/TEST_PARITY.md"]
-    if-no-changes: "error"
+post-steps:
+  - name: Commit the report
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_AW_PROJECT_GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GH_AW_PROJECT_GITHUB_TOKEN }}
+    run: |
+      set -euo pipefail
+      ok=1
+      for f in .reports/TEST_PARITY.md; do
+        if [ ! -s "$f" ]; then
+          echo "::error::agent did not write $f"
+          ok=0
+        fi
+      done
+      [ "$ok" = 1 ] || exit 1
+      git config user.name  "github-actions[bot]"
+      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      git add .reports
+      if git diff --cached --quiet; then
+        echo "the documents are unchanged — nothing to commit"
+        exit 0
+      fi
+      git commit -m "reports: test parity $(date -u +%F)"
+      url="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+      git pull --rebase --autostash "$url" ruby
+      git push "$url" HEAD:ruby
+
 ---
 
 # Test parity report
@@ -123,14 +140,13 @@ the shape the skill gives: the header table (upstream and port branch@sha from
 the mapping table. Every count must be the count of rows in your mapping —
 never a number you did not derive from the census files.
 
-Then open the pull request with `create_pull_request`, adding only
-`.reports/TEST_PARITY.md`, titled `Test parity <date>`. The body is the header
-table's numbers and one sentence on where the gaps cluster.
+The commit is automatic — the run fails if the file is missing when you
+finish, so write it before you finish. Nothing else may change.
 
 ## Rules
 
 - Never edit anything but `.reports/TEST_PARITY.md`.
 - If the port has no application code, stop and say so — there is nothing to
-  map, and no pull request should be opened.
+  map, and the run should end without the document.
 - If upstream has no tests, the document says exactly that — zero owed, zero
-  ported — and that is still a fact worth committing. Open the PR.
+  ported — and that is still a fact worth committing.

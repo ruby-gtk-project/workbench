@@ -74,16 +74,33 @@ steps:
       grep -c '' "$OUT/upstream-catalogue.yaml" "$OUT/port-catalogue.yaml"
       cat "$OUT/context.env"
 
-safe-outputs:
-  create-pull-request:
-    title-prefix: "[translation-parity] "
-    labels: [translation-parity]
-    max: 1
-    draft: false
-    # The census documents and nothing else. An exclusive allowlist means a PR
-    # carrying anything but them is refused rather than reviewed.
-    allowed-files: [".reports/TRANSLATION_PARITY.md", ".reports/translation-parity.yaml"]
-    if-no-changes: "error"
+post-steps:
+  - name: Commit the report
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_AW_PROJECT_GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GH_AW_PROJECT_GITHUB_TOKEN }}
+    run: |
+      set -euo pipefail
+      ok=1
+      for f in .reports/TRANSLATION_PARITY.md .reports/translation-parity.yaml; do
+        if [ ! -s "$f" ]; then
+          echo "::error::agent did not write $f"
+          ok=0
+        fi
+      done
+      [ "$ok" = 1 ] || exit 1
+      git config user.name  "github-actions[bot]"
+      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      git add .reports
+      if git diff --cached --quiet; then
+        echo "the documents are unchanged — nothing to commit"
+        exit 0
+      fi
+      git commit -m "reports: translation parity $(date -u +%F)"
+      url="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+      git pull --rebase --autostash "$url" ruby
+      git push "$url" HEAD:ruby
+
 ---
 
 # Translation parity report
@@ -122,19 +139,16 @@ mkdir -p .reports
 cp /tmp/gh-aw/agent/translation-parity/translation-parity.yaml .reports/translation-parity.yaml
 ```
 
-Both files go in the pull request. Regenerating the YAML must never destroy
+Both files are committed together. Regenerating the YAML must never destroy
 anything, so any prose you want to keep lives only in the markdown.
 
-## The pull request
-
-Call `create_pull_request` adding exactly `.reports/TRANSLATION_PARITY.md` and
-`.reports/translation-parity.yaml`, titled `Translation parity <date>`. The
-body is the counts and one sentence on which languages are at risk.
+The commit is automatic — the run fails if either file is missing when you
+finish, so write both before you finish. Nothing else may change.
 
 ## Rules
 
 - Never edit anything but those two files, both under `.reports/`.
 - If the port has no application code, stop and say so — there is nothing to
-  census, and no pull request should be opened.
+  census, and the run should end without the documents.
 - If the numbers say the port ships a different key set, the report says so.
   "English-only for now" is a gap count, not a state — write it down.
