@@ -2,10 +2,17 @@ name: CI
 
 # See also https://github.com/flatpak/flatpak-github-actions
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
 
 jobs:
   CI:
@@ -15,28 +22,28 @@ jobs:
     steps:
       # Cache apt
       - name: Cache apt
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: /var/cache/apt/archives
           key: apt-cache-${{ runner.arch }}
 
       # Cache Flatpak
       - name: Cache Flatpak dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.local/share/flatpak
           key: flatpak-deps-${{ runner.arch }}
 
       # Cache flatpak-builder state
       - name: Cache .flatpak-builder
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .flatpak-builder
           key: flatpak-builder-${{ runner.arch }}
 
       # Cache Foundry
       - name: Cache .foundry
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .foundry
           key: foundry-${{ runner.arch }}
@@ -46,7 +53,7 @@ jobs:
           sudo apt-get -y update
           sudo apt-get -y install flatpak mutter flatpak-builder foundry
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
 
