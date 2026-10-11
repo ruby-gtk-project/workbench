@@ -1,0 +1,165 @@
+# kettle-jem configuration for a ruby-gtk-project port fork.
+#
+# converge-port-gems.yml seeds this to <fork>/.structuredmerge/kettle-jem.yml,
+# substituting GPL-3.0-or-later with the fork's `license:` from registry.yml.
+#
+# RULE: set every key EXPLICITLY. kettle-jem's config_sync phase merges the
+# packaged template config into this file on every run, and any key we omit is
+# re-seeded with the template author's own value — including licences, funding
+# handles, social handles and a personal ORCID. Omission is not neutral.
+
+# Deliberately empty, and required to be present. A non-empty emoji makes
+# kettle-jem rewrite the README H1 to "<emoji> <gem> / <Namespace>", throwing
+# away the port's handwritten title.
+project_emoji: ""
+
+# No alias table. Omitted, this is seeded with the template author's own
+# identities (pboling/galtzo/Aboling0 -> named individuals).
+author_aliases: {}
+
+# MRI only. The ports load GObject typelibs through ruby-gnome; JRuby and
+# TruffleRuby cannot run them, so their workflows and badges are pruned.
+engines:
+  - ruby
+
+ruby:
+  test_minimum: "3.4"
+
+rubygems:
+  min_ruby: ">= 3.4"
+  # Never touch lib/<app>.rb beyond the version require. Injecting
+  # `require "version_gem"` into an application entrypoint breaks launch.
+  version_gem_entrypoint: disabled
+
+# The non-Ruby assets a GTK gem must ship or it installs fine and crashes on
+# launch: .ui files, GResource bundles, icons, GSettings schemas, catalogues.
+gemspec:
+  package_files:
+    include:
+      - data/**/*
+      - po/**/*
+
+# MUST be explicit. Omitted, config_sync injects `licenses: [MIT]` and the next
+# run rewrites the gemspec to MIT and writes MIT.md into a GPL app. Each port
+# inherits UPSTREAM's licence; COPYING is the text of record.
+licenses:
+  - "GPL-3.0-or-later"
+
+funding:
+  open_collective: false
+
+repository:
+  topology: standalone
+
+rubyforum:
+  family_tag: ""
+  project_tag: ""
+
+workflows:
+  exec_cmd: kettle-test
+  recording: false
+
+readme:
+  top_logos: org
+  h2_synopsis_logos: ""
+  badges:
+    fossa: false
+
+license_eye:
+  dependency_licenses: []
+
+machine_users:
+  - github-actions[bot]
+
+min_divergence_threshold: ""
+
+templates:
+  root: packaged
+  apply: true
+  profile: full
+
+# Semantic diff drivers need smorg-rb on PATH, which needs Ruby 4; the port
+# dev shell pins ruby_3_4. Opt out until that moves.
+git_drivers: none
+
+# No plugins. Omitted, this is seeded with `kettle-drift`.
+plugins: []
+
+defaults:
+  preference: template
+  add_template_only_nodes: true
+  freeze_token: kettle-jem
+
+# Every token the template fills with its author's own handles. Each must be
+# present and empty, or config_sync re-seeds the author's value.
+tokens:
+  forge:
+    gh_user: "ruby-gtk-project"
+    gl_user: ""
+    cb_user: ""
+    sh_user: ""
+  author:
+    name: "ruby-gtk-project"
+    given_names: "ruby-gtk-project"
+    family_names: "contributors"
+    email: "nathanblenheimkidd@gmail.com"
+    domain: "github.com"
+    orcid: ""
+  funding:
+    open_collective: false
+    kofi: ""
+    paypal: ""
+    buymeacoffee: ""
+    liberapay: ""
+  social:
+    mastodon: ""
+    bluesky: ""
+    linktree: ""
+    devto: ""
+
+patterns:
+  # The packaged template raw_copies the template author's own public signing
+  # certificate (certs/pboling.pem) into every project. Inert — it is not in
+  # spec.files and cert_chain is empty — but it must not land in 84 repos.
+  - path: "certs/**"
+    strategy: keep_destination
+  # The kettle-dev harness gemfiles pull dev-only third-party forks
+  # (pboling/rspec_junit_formatter, pboling/rubocop-packaging) and are unused
+  # while the generated CI stays off.
+  - path: "gemfiles/**"
+    strategy: keep_destination
+  # Generated kettle-dev CI assumes spec/ + rspec + appraisals + kettle-test.
+  # The ports have test/ and a nix dev shell. Turn on per fork once a port
+  # actually has an rspec suite; until then the fork's own workflows stand.
+  - path: ".github/workflows/**"
+    strategy: keep_destination
+
+files:
+  # Template boilerplate carrying the template author's own project links.
+  FUNDING.md:
+    strategy: keep_destination
+  CONTRIBUTING.md:
+    strategy: keep_destination
+  # 262 lines of mise/kettle-test instructions get appended here, telling the
+  # porting agent to use `mise exec` when the ports use `nix develop`. This is
+  # the agent instruction file — it must stay ours.
+  AGENTS.md:
+    strategy: keep_destination
+  # Links a GPL-3.0-or-later.md that kettle-jem does not ship, and offers
+  # "contact us to discuss a custom commercial license" — we cannot relicense
+  # upstream's GPL app.
+  LICENSE.md:
+    strategy: keep_destination
+  # Wants personal given/family names; the author here is an org, not a person.
+  CITATION.cff:
+    strategy: keep_destination
+  # The house Ruby style is deliberate: DisabledByDefault with a curated list,
+  # plus the seven custom cops in cops/.
+  .rubocop.yml:
+    strategy: keep_destination
+  # App-specific GTK/typelib wiring, and there is no Nix merger in the family.
+  flake.nix:
+    strategy: keep_destination
+  # Upstream's licence text, inherited. Never templated.
+  COPYING:
+    strategy: keep_destination
