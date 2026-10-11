@@ -1,0 +1,63 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    adwaita (4.3.9)
+      gtk4 (= 4.3.9)
+      rake
+    atk (4.3.9)
+      glib2 (= 4.3.9)
+      rake
+    cairo (1.18.5)
+      pkg-config (>= 1.2.2)
+      red-colors
+    cairo-gobject (4.3.9)
+      cairo (>= 1.16.2)
+      glib2 (= 4.3.9)
+    fiddle (1.1.8)
+    gdk4 (4.3.9)
+      cairo-gobject (= 4.3.9)
+      gdk_pixbuf2 (= 4.3.9)
+      pango (= 4.3.9)
+      rake
+    gdk_pixbuf2 (4.3.9)
+      gio2 (= 4.3.9)
+      rake
+    gio2 (4.3.9)
+      fiddle
+      gobject-introspection (= 4.3.9)
+    glib2 (4.3.9)
+      native-package-installer (>= 1.0.3)
+      pkg-config (>= 1.3.5)
+    gobject-introspection (4.3.9)
+      glib2 (= 4.3.9)
+    graphene1 (4.3.9)
+      gobject-introspection (= 4.3.9)
+    gsk4 (4.3.9)
+      gdk4 (= 4.3.9)
+      graphene1 (= 4.3.9)
+    gtk4 (4.3.9)
+      atk (= 4.3.9)
+      gdk4 (= 4.3.9)
+      gsk4 (= 4.3.9)
+    json (3.0.2)
+    matrix (0.4.3)
+    native-package-installer (1.1.9)
+    pango (4.3.9)
+      cairo-gobject (= 4.3.9)
+      gobject-introspection (= 4.3.9)
+    pkg-config (1.6.5)
+    rake (13.4.2)
+    red-colors (0.5.0)
+      json
+      matrix
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  adwaita
+  gtk4
+
+BUNDLED WITH
+   2.6.9

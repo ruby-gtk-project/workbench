@@ -48,3 +48,7 @@ Appraisal.*.gemfile.lock
 *~
 # Sentinels
 .floss_funding.*.lock
+
+# nix/ is the runtime gemdir for flake.nix: bundlerEnv needs its lock and
+# gemset committed or the app cannot be built reproducibly.
+!nix/Gemfile.lock
